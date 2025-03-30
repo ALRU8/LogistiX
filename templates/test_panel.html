@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robot Control Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-4xl flex flex-col items-center">
+    <h1 class="text-2xl font-bold mb-8">Данные QR-кода</h1>
+    <div class="text-left w-full">
+        <p><strong>QR-данные:</strong></p>
+        <pre class="bg-gray-100 p-4 rounded"><span id="textik">Loading...</span></pre>
+    </div>
+    <div class="mt-8 w-full">
+        <h2 class="text-xl font-bold mb-4">Видеопоток</h2>
+        <img src="/video_feed" alt="Video Feed" class="rounded-lg shadow-lg w-full h-auto">
+    </div>
+    <a href="/logout" class="bg-red-500 text-white py-4 px-6 text-center rounded mt-6">Выйти</a>
+</div>
+<script>
+  async function sendPostRequest(url, data) {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+            const result = await response.json();
+            console.log(result);
+        }
+  async function fetchData() {
+            const response = await fetch('/get_data');
+            const data = await response.json();
+            updateUI(data);
+        }
+  function updateUI(data) {
+            document.getElementById('textik').innerText = data.text;
+  }
+  setInterval(fetchData, 500);
+  window.onload = fetchData;
+</script>
+</body>
+</html>
