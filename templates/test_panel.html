@@ -3,44 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Robot Control Panel</title>
+    <title>Test Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-<div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-4xl flex flex-col items-center">
-    <h1 class="text-2xl font-bold mb-8">Данные QR-кода</h1>
-    <div class="text-left w-full">
-        <p><strong>QR-данные:</strong></p>
-        <pre class="bg-gray-100 p-4 rounded"><span id="textik">Loading...</span></pre>
-    </div>
-    <div class="mt-8 w-full">
-        <h2 class="text-xl font-bold mb-4">Видеопоток</h2>
-        <img src="/video_feed" alt="Video Feed" class="rounded-lg shadow-lg w-full h-auto">
-    </div>
-    <a href="/logout" class="bg-red-500 text-white py-4 px-6 text-center rounded mt-6">Выйти</a>
-</div>
-<script>
-  async function sendPostRequest(url, data) {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            });
-            const result = await response.json();
-            console.log(result);
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <script>
+        window.onload = function () {
+            document.body.style.zoom = "67%";
+            fetchData();
+            fetchFieldsState();
+            setInterval(fetchData, 1000);
+            setInterval(fetchFieldsState, 5000);
+        };
+
+        async function fetchFieldsState() {
+            try {
+                const response = await fetch('/get_fields_state');
+                const data = await response.json();
+                updateFieldsTables(data);
+            } catch (error) {
+                console.error("Error fetching fields state:", error);
+            }
         }
-  async function fetchData() {
+
+        function updateFieldsTables(data) {
+            const field1 = data.field1;
+            const field1Table = document.getElementById('field1-table');
+            updateSingleField(field1, field1Table);
+
+            const field2 = data.field2;
+            const field2Table = document.getElementById('field2-table');
+            updateSingleField(field2, field2Table);
+        }
+
+        function updateSingleField(fieldData, tableElement) {
+            tableElement.innerHTML = '';
+            for (let y = 0; y < fieldData.length; y++) {
+                const row = document.createElement('tr');
+                for (let x = 0; x < fieldData[y].length; x++) {
+                    const cell = document.createElement('td');
+                    cell.className = 'w-8 h-8 border border-gray-600';
+                    if (fieldData[y][x] === 1) {
+                        cell.style.backgroundColor = '#FF5733';
+                    } else if (fieldData[y][x] === 2) {
+                        cell.style.backgroundColor = '#33FF57';
+                    } else if (fieldData[y][x] === 3) {
+                        cell.style.backgroundColor = '#FFE600';
+                    } else if (fieldData[y][x] === 4) {
+                        cell.style.backgroundColor = '#09837B';
+                    } else if (fieldData[y][x] === 5) {
+                        cell.style.backgroundColor = '#770983';
+                    } else if (fieldData[y][x] === 6) {
+                        cell.style.backgroundColor = '#75072F';
+                    } else {
+                        cell.style.backgroundColor = '#2D3748';
+                    }
+                    row.appendChild(cell);
+                }
+                tableElement.appendChild(row);
+            }
+        }
+
+        async function fetchData() {
             const response = await fetch('/get_data');
             const data = await response.json();
-            updateUI(data);
-        }
-  function updateUI(data) {
             document.getElementById('textik').innerText = data.text;
-  }
-  setInterval(fetchData, 500);
-  window.onload = fetchData;
-</script>
+        }
+    </script>
+    <style>
+        .console {
+            background-color: #1e1e1e;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .field-container {
+            background-color: #1a202c;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .field-title {
+            color: #4299e1;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .field-table {
+            border-collapse: collapse;
+            margin: 0 auto;
+        }
+        .logout-button {
+            background: linear-gradient(135deg, #ff4d4d, #ff9999);
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+            box-shadow: 0 0 10px rgba(255, 77, 77, 0.5);
+            transition: all 0.3s ease;
+        }
+        .logout-button:hover {
+            background: linear-gradient(135deg, #ff9999, #ff4d4d);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 77, 77, 0.8);
+        }
+        .dark-maroon-button {
+            background: linear-gradient(135deg, #5a0a1d, #8a0a2e);
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(90, 10, 29, 0.5);
+            box-shadow: 0 0 10px rgba(90, 10, 29, 0.5);
+            transition: all 0.3s ease;
+        }
+        .dark-maroon-button:hover {
+            background: linear-gradient(135deg, #8a0a2e, #5a0a1d);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(90, 10, 29, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white flex items-center justify-center min-h-screen">
+    <div class="bg-gray-800 p-8 rounded-3xl shadow-2xl w-full max-w-7xl flex">
+        <div class="w-full flex flex-col space-y-6">
+            <h1 class="text-3xl font-bold text-blue-400">Test Panel</h1>
+            <div class="console">
+                <pre id="textik">Loading...</pre>
+            </div>
+            <p class="text-gray-400">Contact: <span id="contact">@ALRU8</span></p>
+            <div class="flex flex-row gap-4">
+                <div class="field-container flex-1">
+                    <h2 class="field-title text-xl">Field 1 (8x12)</h2>
+                    <table id="field1-table" class="field-table"></table>
+                </div>
+                <div class="field-container flex-1">
+                    <h2 class="field-title text-xl">Field 2 (8x12)</h2>
+                    <table id="field2-table" class="field-table"></table>
+                </div>
+            </div>
+            <div class="flex flex-row gap-4">
+                <button class="dark-maroon-button py-4 px-6 rounded flex-1" onclick="emergencyStop()">EMERGENCY STOP</button>
+            </div>
+            <a href="/logout" class="logout-button py-4 px-6 rounded w-full text-center">Выйти</a>
+        </div>
+    </div>
+
+    <script>
+        async function emergencyStop() {
+            await fetch('/emergency_stop', { method: 'POST' });
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            fetchFieldsState();
+        }
+    </script>
 </body>
 </html>
