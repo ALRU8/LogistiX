@@ -1,4 +1,3 @@
-from inference.core.interfaces.stream.sinks import render_boxes
 import cv2
 import supervision as sv
 from pyzbar import pyzbar
@@ -67,7 +66,7 @@ def my_custom_sink(video_frame):
         for box in result.boxes:
             class_id = int(box.cls)
             class_name = model.names[class_id]
-            if class_name == "box":  # Filter for "lego" class
+            if class_name == "box":
                 x1, y1, x2, y2 = map(int, box.xyxy[0])
                 boxes.append({
                     "class": class_name,
@@ -87,7 +86,8 @@ def my_custom_sink(video_frame):
         for i, box in enumerate(boxes):
             print(f"Посылка {i + 1}:")
             print(f"  Координаты: (x: {box['x']}, y: {box['y']})")
-            print(f"  Размеры: (ширина: {box['width']}, высота: {box['height']})")
+            print(
+                f"  Размеры: (ширина: {box['width']}, высота: {box['height']})")
 
             output_data += f"Посылка {i + 1}:\n"
             output_data += f"  Координаты: (x: {box['x']}, y: {box['y']})\n"
@@ -105,7 +105,8 @@ def my_custom_sink(video_frame):
                     print("QR-код распознан.")
                     print(f"QR-код: {qr_code_value}")
                     output_data += f"  QR-код: {qr_code_value}\n"
-                    image = draw_russian_text(image, f"QR: {qr_code_value}", (10, 30))
+                    image = draw_russian_text(
+                        image, f"QR: {qr_code_value}", (10, 30))
                 else:
                     print("QR-код не распознан.")
                     output_data += "  QR-код не распознан.\n"
@@ -115,7 +116,8 @@ def my_custom_sink(video_frame):
 
         detections = sv.Detections.from_yolov8(results[0])
         labels = [model.names[int(cls)] for cls in detections.class_id]
-        image = label_annotator.annotate(scene=image, detections=detections, labels=labels)
+        image = label_annotator.annotate(
+            scene=image, detections=detections, labels=labels)
         image = box_annotator.annotate(image, detections=detections)
 
     write_to_file(output_data)

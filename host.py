@@ -7,18 +7,17 @@ import re
 import json
 from math import trunc, ceil
 
-
 class get_password(Resource):
     def get(self):
         try:
             data = loads(request.data)
+            print(data)
             username = data['username']
             password = db.get_user_password(username)
             print(username, " ", password)
             return jsonify({'key': password})
         except Exception as e:
             return jsonify({'key': e})
-
 
 class add_user(Resource):
     def post(self):
@@ -31,7 +30,6 @@ class add_user(Resource):
         except Exception as e:
             return jsonify({'key': e})
 
-
 class get_data_txt(Resource):
     def get(self):
         try:
@@ -40,16 +38,21 @@ class get_data_txt(Resource):
                 return "Файл с данными не найден."
             with open(file, "r", encoding="utf-8") as f:
                 data = f.read()
+            file_1 = 'tenzo.txt'
+            if not os.path.exists(file_1):
+                return "Файл с данными не найден."
+            with open(file_1, "r", encoding="utf-8") as f:
+                data_1 = f.read()
+            data += f"\nВес товара: {data_1}\n"
             return jsonify({'text': data})
         except Exception as e:
             return jsonify({'key': e})
-
 
 class get_size(Resource):
     def get(self):
         try:
             def extract_qr_data_lines(file_path):
-                pattern = r"Поле:\s*\d+\s*Ширина:\s*\d+\s*Высота:\s*\d+\s*Вес:\s*\d+"
+                pattern = r"Поле:\s*\d+\s*Ширина:\s*\d+\s*Высота:\s*\d+"
                 qr_data_lines = []
                 try:
                     with open(file_path, "r", encoding="utf-8") as file:
@@ -70,7 +73,7 @@ class get_size(Resource):
             file_path = "output.txt"
             qr_data_lines = extract_qr_data_lines(file_path)
             print(qr_data_lines)
-            pattern = r"Поле:\s*(\d+)\s*Ширина:\s*(\d+)\s*Высота:\s*(\d+)\s*Вес:\s*(\d+)"
+            pattern = r"Поле:\s*(\d+)\s*Ширина:\s*(\d+)\s*Высота:\s*(\d+)"
             match = re.match(pattern, qr_data_lines[0])
             if not match:
                 print("Некорректный формат входных данных.")
@@ -78,11 +81,9 @@ class get_size(Resource):
             target_field = int(match.group(1))
             box_width = int(match.group(2))
             box_height = int(match.group(3))
-            weight = int(match.group(4))
             return jsonify({'box_width': box_width, 'box_height': box_height})
         except Exception as e:
             return jsonify({'key': e})
-
 
 class get_wall(Resource):
     def get(self):
@@ -142,20 +143,40 @@ class get_wall(Resource):
                 best_x, best_y, best_score = -1, -1, -1
                 best_orientation = None
 
-                for orientation in [(box_height, box_width), (box_width, box_height)]:
-                    width, height = orientation
+                if box_height >= box_width:
+                    width, height = box_width, box_height
                     for y in range(len(field) - height + 1):
                         for x in range(len(field[0]) - width + 1):
                             if can_place_box(field, width, height, x, y):
                                 score = calculate_score(field, width, height, x, y)
-
-                                if orientation == (box_width, box_height):
-                                    score += 100
-
+                                score += 200
                                 if score > best_score:
                                     best_score = score
                                     best_x, best_y = x, y
-                                    best_orientation = orientation
+                                    best_orientation = (width, height)
+                else:
+
+                    width, height = box_height, box_width
+                    for y in range(len(field) - height + 1):
+                        for x in range(len(field[0]) - width + 1):
+                            if can_place_box(field, width, height, x, y):
+                                score = calculate_score(field, width, height, x, y)
+                                score += 200
+                                if score > best_score:
+                                    best_score = score
+                                    best_x, best_y = x, y
+                                    best_orientation = (width, height)
+
+                if best_orientation is None:
+                    width, height = box_width, box_height
+                    for y in range(len(field) - height + 1):
+                        for x in range(len(field[0]) - width + 1):
+                            if can_place_box(field, width, height, x, y):
+                                score = calculate_score(field, width, height, x, y)
+                                if score > best_score:
+                                    best_score = score
+                                    best_x, best_y = x, y
+                                    best_orientation = (width, height)
 
                 return best_x, best_y, best_orientation
 
@@ -197,7 +218,7 @@ class get_wall(Resource):
             def process_input(input_string, x1, y1, x2, y2):
                 global field1, field2
 
-                pattern = r"Поле:\s*(\d+)\s*Ширина:\s*(\d+)\s*Высота:\s*(\d+)\s*Вес:\s*(\d+)"
+                pattern = r"Поле:\s*(\d+)\s*Ширина:\s*(\d+)\s*Высота:\s*(\d+)"
                 match = re.match(pattern, input_string)
                 if not match:
                     print("Некорректный формат входных данных.")
@@ -206,7 +227,6 @@ class get_wall(Resource):
                 target_field = int(match.group(1))
                 box_width = int(match.group(2))
                 box_height = int(match.group(3))
-                weight = int(match.group(4))
 
                 field1, field2, current_box_id = load_fields_from_file(x1, y1, x2, y2)
 
@@ -220,8 +240,8 @@ class get_wall(Resource):
 
                 x, y, orientation = find_best_placement(field, box_width, box_height)
                 if x != -1 and y != -1:
-                    has_left = any(field[i][x - 1] != 0 for i in range(y, y + box_height)) if x > 0 else False
-                    has_top = any(field[y - 1][j] != 0 for j in range(x, x + box_width)) if y > 0 else False
+                    has_left = any(field[i][x - 1] != 0 for i in range(y, y + orientation[1])) if x > 0 else False
+                    has_top = any(field[y - 1][j] != 0 for j in range(x, x + orientation[0])) if y > 0 else False
 
                     width, height = orientation
                     current_box_id += 1
@@ -246,7 +266,7 @@ class get_wall(Resource):
                     elif width < height:
                         orientation_str = "вертикальная"
                     else:
-                        orientation_str = "горизонтальная"
+                        orientation_str = "квадратная"
 
                     print(f"Ориентация коробки: {orientation_str}")
                     print(f"Центр коробки на поле {field_name} (клетки): ({center_x_cell}, {center_y_cell})")
@@ -270,13 +290,13 @@ class get_wall(Resource):
 
                     if has_left and has_top:
                         center_xx += 4
-                        center_yy -= 6
+                        center_yy -= 4
                         print('has_left and has_top')
                     elif has_left:
                         center_xx += 4
                         print('has_left')
                     elif has_top:
-                        center_yy -= 6
+                        center_yy -= 4
                         print('has_top')
                     else:
                         print('NOT has_left and has_top')
@@ -290,7 +310,7 @@ class get_wall(Resource):
                     return None
 
             def extract_qr_data_lines(file_path):
-                pattern = r"Поле:\s*\d+\s*Ширина:\s*\d+\s*Высота:\s*\d+\s*Вес:\s*\d+"
+                pattern = r"Поле:\s*\d+\s*Ширина:\s*\d+\s*Высота:\s*\d+"
                 qr_data_lines = []
                 try:
                     with open(file_path, "r", encoding="utf-8") as file:
@@ -317,12 +337,13 @@ class get_wall(Resource):
                     except:
                         pass
             print(qr_data_lines)
-            # input_string = "Поле: 2 Ширина: 4 Высота: 4 Вес: 12"
             data = process_input(qr_data_lines[0], x1, y1, x2, y2)
             if data is None:
                 return jsonify({'error': "error"})
             center_coordinates = data['center_coordinates']
             orientation_str = data['orientation']
+            print(center_coordinates)
+            print(orientation_str)
             return jsonify({'center': center_coordinates, 'orientation': orientation_str})
         except Exception as e:
             return jsonify({'key': str(e)})
